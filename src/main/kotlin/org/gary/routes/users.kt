@@ -17,6 +17,10 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.serialization.Serializable
+import org.gary.persistence.UserPersistence
+import org.gary.service.JwtService
+import org.gary.service.JwtToken
+import org.gary.service.UserService.register
 
 // Conduit OpenAPI user routes types
 @Serializable
@@ -34,13 +38,14 @@ data class User(
   val image: String
 )
 
-fun Application.userRoutes(users: UserService) = routing {
+context(UserPersistence, JwtService)
+fun Application.userRoutes() = routing {
   route("/users") {
     /* Registration: POST /api/users */
     post {
       either<DomainError, UserWrapper<User>> {
         val (username, email, password) = receiveCatching<UserWrapper<NewUser>>().user
-        val token = users.register(RegisterUser(username, email, password)).bind().value
+        val token = UserService.register(RegisterUser(username, email, password)).value
         UserWrapper(User(email, token, username, "", ""))
       }.respond(HttpStatusCode.Created)
     }

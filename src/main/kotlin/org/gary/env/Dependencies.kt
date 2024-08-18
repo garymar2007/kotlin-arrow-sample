@@ -2,16 +2,17 @@ package org.gary.env
 
 import arrow.fx.coroutines.Resource
 import arrow.fx.coroutines.continuations.resource
+import com.zaxxer.hikari.HikariDataSource
+import org.gary.persistence.UserPersistence
 import org.gary.persistence.userPersistence
-import org.gary.service.UserService
 import org.gary.service.JwtService
-import org.gary.service.userService
+import org.gary.sqldelight.SqlDelight
 
-class Dependencies(val userService: UserService)
+class Dependencies(val userPersistence: UserPersistence, val jwtService: JwtService)
 
 fun dependencies(env: Env): Resource<Dependencies> = resource {
-  val hikari = hikari(env.dataSource).bind()
-  val sqlDelight = sqlDelight(hikari).bind()
+  val hikari: HikariDataSource = hikari(env.dataSource).bind()
+  val sqlDelight: SqlDelight = sqlDelight(hikari).bind()
   val userPersistence = userPersistence(sqlDelight.usersQueries)
-  Dependencies(userService(userPersistence, JwtService(env.auth)))
+  Dependencies(userPersistence, JwtService(env.auth))
 }
